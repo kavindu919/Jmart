@@ -5,43 +5,82 @@ namespace App\Helpers;
 use App\Models\Product;
 use Illuminate\Support\Facades\Cookie;
 
-class ClassManagement
+class CartManagement
 {
 
     //add items to cart 
+    // static public function addItemToCart($product_id)
+    // {
+    //     $cart_items = self::getCartItemsFromCookie();
+    //     $existing_item = null;
+
+    //     foreach ($cart_items as $key => $item) {
+    //         if ($item['product_id'] == $product_id) {
+    //             $existing_item = $key;
+    //             break;
+    //         }
+    //         if ($existing_item !== null) {
+    //             $cart_items[$existing_item]['quantity']++;
+    //             $cart_items[$existing_item]['total_amount'] = $cart_items[$existing_item]['quantity'] * $cart_items[$existing_item]['unit_amount'];
+    //         } else {
+    //             $product = Product::where('id', $product_id)
+    //                 ->first(['id', 'name', 'price', 'images']);
+
+    //             if ($product) {
+    //                 $cart_items[] = [
+    //                     'product_id' => $product_id,
+    //                     'name' => $product->name,
+    //                     'image' => $product->images[0],
+    //                     'quantity' => 1,
+    //                     'unit_amount' => $product->price,
+    //                     'total_amount' => $product->price,
+    //                 ];
+    //             }
+    //         }
+
+    //         self::addCartItemsToCookie($cart_items);
+    //         return count($cart_items);
+    //     }
+    // }
     static public function addItemToCart($product_id)
     {
         $cart_items = self::getCartItemsFromCookie();
-        $existing_item = null;
+        $existing_item_key = null;
 
+        // Check if the product is already in the cart
         foreach ($cart_items as $key => $item) {
             if ($item['product_id'] == $product_id) {
-                $existing_item = $key;
+                $existing_item_key = $key;
                 break;
             }
-            if ($existing_item !== null) {
-                $cart_items[$existing_item]['quantity']++;
-                $cart_items[$existing_item]['total_amount'] = $cart_items[$existing_item]['quantity'] * $cart_items[$existing_item]['unit_amount'];
-            } else {
-                $product = Product::where('id', $product_id)
-                    ->first(['id', 'name', 'price', 'images']);
-
-                if ($product) {
-                    $cart_items[] = [
-                        'product_id' => $product_id,
-                        'name' => $product->name,
-                        'image' => $product->images[0],
-                        'quantity' => 1,
-                        'unit_amount' => $product->price,
-                        'total_amount' => $product->price,
-                    ];
-                }
-            }
-
-            self::addCartItemsToCookie($cart_items);
-            return count($cart_items);
         }
+
+        if ($existing_item_key !== null) {
+            // Increment quantity if item exists
+            $cart_items[$existing_item_key]['quantity']++;
+            $cart_items[$existing_item_key]['total_amount'] = $cart_items[$existing_item_key]['quantity'] * $cart_items[$existing_item_key]['unit_amount'];
+        } else {
+            // Add new item to cart
+            $product = Product::where('id', $product_id)->first(['id', 'name', 'price', 'images']);
+
+            if ($product) {
+                $cart_items[] = [
+                    'product_id' => $product_id,
+                    'name' => $product->name,
+                    'image' => $product->images[0],
+                    'quantity' => 1,
+                    'unit_amount' => $product->price,
+                    'total_amount' => $product->price,
+                ];
+            }
+        }
+
+        // Update cart cookie
+        self::addCartItemsToCookie($cart_items);
+
+        return count($cart_items);
     }
+
 
     //add item to cookie 
     static public function addCartItemsToCookie($cart_items)
