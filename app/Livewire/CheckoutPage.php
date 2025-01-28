@@ -7,17 +7,27 @@ use App\Models\Address;
 use App\Models\Order;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use Stripe\Checkout\Session;
+use Stripe\Stripe;
 
 class CheckoutPage extends Component
 {
     public $first_name;
     public $last_name;
     public $phone;
-    public $street_addres;
+    public $street_address;
     public $city;
     public $state;
     public $zip_code;
     public $payment_method;
+
+    public function mount()
+    {
+        $cart_items = CartManagement::getCartItemsFromCookie();
+        if (count($cart_items) == 0) {
+            return redirect()->route('products');
+        };
+    }
 
     public function placeOrder()
     {
@@ -25,7 +35,7 @@ class CheckoutPage extends Component
             'first_name' => 'required',
             'last_name' => 'required',
             'phone' => 'required',
-            'street_addres' => 'required',
+            'street_address' => 'required',
             'city' => 'required',
             'state' => 'required',
             'zip_code' => 'required',
@@ -34,16 +44,19 @@ class CheckoutPage extends Component
         $cart_items = CartManagement::getCartItemsFromCookie();
         $line_items = [];
         foreach ($cart_items as $item) {
-            $line_items[] = [
-                'price' => [
-                    'currency' => 'lkr',
-                    'unit_amount' => $item['unit_amount'] * 300,
-                    'product_data' => [
-                        'name' => $item['name']
+            $line_items = [];
+            foreach ($cart_items as $item) {
+                $line_items[] = [
+                    'price_data' => [
+                        'currency' => 'lkr',
+                        'product_data' => [
+                            'name' => $item['name'],
+                        ],
+                        'unit_amount' => $item['unit_amount'] * 100,
                     ],
-                    'quantity' => $item['quantity']
-                ]
-            ];
+                    'quantity' => $item['quantity'],
+                ];
+            }
         }
         $order = new Order();
         $order->user_id = Auth::id();
@@ -67,8 +80,25 @@ class CheckoutPage extends Component
 
         $redirect_url = '';
         if ($this->payment_method == 'stripe') {
+            Stripe::setApiKey(env('STRIPE_SECRET'));
+            $sessionCheckout = Session::create([
+                'payment_method_types' => ['card'],
+                'customer_email' => Auth::user()->email,
+                'line_items' => $line_items,
+                'mode' => 'payment',
+                'success_url' => route('success') . '?session_id={CHECKOUT_SESSION_ID}',
+                'cancel_url' => route('cancel'),
+            ]);
+            $redirect_url = $sessionCheckout->url;
         } else {
+            $redirect_url = route('success');
         }
+        $order->save();
+        $address->order_id = $order->id;
+        $address->save();
+        $order->items()->createMany($cart_items);
+        CartManagement::clearCartItems();
+        return redirect($redirect_url);
     }
 
     public function render()

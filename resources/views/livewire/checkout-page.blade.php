@@ -55,11 +55,11 @@
                             <label class="block text-gray-700 dark:text-white mb-1" for="address">
                                 Address
                             </label>
-                            <input wire:model='street_addres'
+                            <input wire:model='street_address'
                                 class="w-full rounded-lg border py-2 px-3 dark:bg-gray-700 dark:text-white dark:border-none"
                                 id="address" type="text">
                             </input>
-                            @error('street_addres')
+                            @error('street_address')
                                 <div class="text-red-500 text-sm">{{ $message }}</div>
                             @enderror
                         </div>
@@ -126,8 +126,9 @@
                             </label>
                         </li>
                         <li>
-                            <input class="hidden peer" id="hosting-big" type="radio" value="stripe">
-                            <label wire:model='payment_method'
+                            <input class="hidden peer" wire:model='payment_method' id="hosting-big" type="radio"
+                                value="stripe">
+                            <label
                                 class="inline-flex items-center justify-between w-full p-5 text-gray-500 bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-gray-300 dark:border-gray-700 dark:peer-checked:text-blue-500 peer-checked:border-blue-600 peer-checked:text-blue-600 hover:text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700"
                                 for="hosting-big">
                                 <div class="block">
@@ -223,9 +224,6 @@
                                 </div>
                             </li>
                         @endforeach
-
-
-
                     </ul>
                 </div>
             </div>
